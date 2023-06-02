@@ -24,7 +24,7 @@ xvfb-run ./Fake-Request-Gen
 ```
 
 Command line args
-```shell
+```
 Usage of ./Fake-Request-Gen:
   -browser string
         Sets the browser to use (default "firefox")
