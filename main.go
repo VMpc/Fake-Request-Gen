@@ -1,12 +1,14 @@
 package main
 
 import (
-	"encoding/csv"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -20,13 +22,13 @@ func init() {
 		browserArgsUsage string = "Sets the browser args to use"
 
 		urlValue string = "https://moz.com/top-500/download/?table=top500Domains"
-		urlUsage string = "(MUST return a raw csv file) Sets the specified URL"
+		urlUsage string = "Sets the specified URL/File path"
 
 		breakValue int    = 60
-		breakUsage string = "Set the maximum amount of time the program will view pages for in seconds"
+		breakUsage string = "Sets the maximum amount of time the program will view pages for in seconds"
 
 		viewValue int    = 60
-		viewUsage string = "Set the maximum amount of time it views a page for in seconds"
+		viewUsage string = "Sets the maximum amount of time it views a page for in seconds"
 	)
 
 	flag.StringVar(&Browser, "browser", browserValue, browserUsage)
@@ -67,7 +69,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		fmt.Println("Going to ", url)
+		fmt.Println("Going to", url)
 
 		/* View the page for X amount of seconds then kill firefox */
 		time.Sleep(time.Duration(rand.Intn(viewMax)) * time.Second)
@@ -84,21 +86,45 @@ func main() {
 	}
 }
 
-/* Scrapes top 500 sites from https://moz.com */
-func ScrapeData() (Urls []string, err error) {
-	res, err := http.Get(URL)
-	if err != nil {
-		return
+/* Handle both urls, file paths and get the URLs from it */
+func parseData() ([]string, error) {
+	var (
+		tempData []byte
+		err      error
+	)
+
+	/* A switch statement looks SLIGHTLY nicer than if/else in this situation */
+	switch strings.HasPrefix(URL, "http") {
+	case true:
+		res, err := http.Get(URL)
+		if err != nil {
+			return nil, err
+		}
+		tempData, err = ioutil.ReadAll(res.Body)
+	default:
+		if _, err = os.Stat(URL); err != nil {
+			return nil, err
+		}
+		tempData, err = os.ReadFile(URL)
 	}
 
-	data, err := csv.NewReader(res.Body).ReadAll()
+	return urlRegex.FindAllString(string(tempData), -1), nil
+}
+
+/* Scrapes top 500 sites from https://moz.com */
+func ScrapeData() (Urls []string, err error) {
+	data, err := parseData()
 	if err != nil {
 		return
 	}
 
 	for _, line := range data {
-		Urls = append(Urls, "https://"+line[1])
-		fmt.Println(line[1])
+		if !strings.HasPrefix(line, "http") {
+			line = "https://" + line
+		}
+
+		Urls = append(Urls, line)
+		fmt.Println(line)
 	}
 
 	if len(Urls) == 0 {
@@ -114,4 +140,6 @@ var (
 	URL         string
 	breakMax    int
 	viewMax     int
+	// Gladly stolen from https://regex101.com/library/hM4wG0
+	urlRegex *regexp.Regexp = regexp.MustCompile(`(?:https?:\/\/)?(?:[-\w_\.]{2,}\.)?([-\w_]{1,}\.[a-z]{2,4})(?:\/\S*)?`)
 )
