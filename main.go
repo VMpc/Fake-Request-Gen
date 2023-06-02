@@ -124,7 +124,6 @@ func ScrapeData() (Urls []string, err error) {
 		}
 
 		Urls = append(Urls, line)
-		fmt.Println(line)
 	}
 
 	if len(Urls) == 0 {
