@@ -52,6 +52,7 @@ func init() {
 
 func main() {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
+	Browser = strings.ToLower(Browser)
 
 	urls, err := ScrapeData()
 	if err != nil {
@@ -60,21 +61,34 @@ func main() {
 	}
 	fmt.Printf("Found %d urls, starting program\n", len(urls))
 
+	_, err = exec.LookPath(Browser)
+	if err != nil && Browser != "none" {
+		Browser = "none"
+		fmt.Println("Browser not found in path, using regular http requests.")
+	}
+
 	for {
 		url := urls[rand.Intn(len(urls))]
-		args := append(strings.Fields(BrowserArgs), url)
-
-		cmd := exec.Command(Browser, args...)
-		if err := cmd.Start(); err != nil {
-			fmt.Println(err)
-			return
-		}
 		fmt.Println("Going to", url)
 
-		/* View the page for X amount of seconds then kill firefox */
-		time.Sleep(time.Duration(rand.Intn(viewMax)) * time.Second)
-		if err := cmd.Process.Kill(); err != nil {
-			fmt.Println(err)
+		if Browser == "none" {
+			resp, err := http.Get(url)
+			if err == nil {
+				resp.Body.Close()
+			}
+		} else {
+			args := append(strings.Fields(BrowserArgs), url)
+			cmd := exec.Command(Browser, args...)
+			if err := cmd.Start(); err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			/* View the page for X amount of seconds then kill firefox */
+			time.Sleep(time.Duration(rand.Intn(viewMax)) * time.Second)
+			if err := cmd.Process.Kill(); err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		/* "Random" choice between a short sleep and a long sleep */

@@ -22,6 +22,10 @@ To run without a display server (ex usage: running in a tty)
 ```
 xvfb-run ./Fake-Request-Gen 
 ```
+To run without a browser (Uses the default http client, good for low memory usage but less realistic looking)
+```
+./Fake-Requests-Gen --browser none
+```
 
 Command line args
 ```

@@ -7,7 +7,7 @@
 *.dll
 *.so
 *.dylib
-Fake-Requests-Gen
+Fake-Request-Gen
 
 # Test binary, built with `go test -c`
 *.test
