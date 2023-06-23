@@ -24,7 +24,7 @@ xvfb-run ./Fake-Request-Gen
 ```
 To run without a browser (Uses the default http client, good for low memory usage but less realistic looking)
 ```
-./Fake-Requests-Gen --browser none
+./Fake-Request-Gen --browser none
 ```
 
 Command line args
