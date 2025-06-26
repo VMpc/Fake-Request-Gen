@@ -114,6 +114,8 @@ func parseData() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+		
+		defer res.Body.Close()
 		tempData, err = ioutil.ReadAll(res.Body)
 	default:
 		if _, err = os.Stat(URL); err != nil {
